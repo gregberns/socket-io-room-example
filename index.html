@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Socket.IO chat</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font: 13px Helvetica, Arial; }
+      form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
+      form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
+      form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+      #messages { list-style-type: none; margin: 0; padding: 0; }
+      #messages li { padding: 5px 10px; }
+      #messages li:nth-child(odd) { background: #eee; }
+    </style>
+  </head>
+  <body>
+    <p>RoomId:</p>
+    <p id="roomId"></p>
+    <ul id="messages"></ul>
+    <form action="">
+      <input id="m" autocomplete="off" /><button>Send</button>
+    </form>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+    <script>
+        var socket = io();
+        var _roomId;
+        
+        $.getJSON("/api/req", function(data){
+          //recieve message
+          _roomId = data.roomId;
+          $("#roomId").text(_roomId);
+          initWatchRoom(_roomId);
+        });
+        
+        $('form').submit(function(){
+            var msg = $("#m").val();
+            sendMessage({ roomId: _roomId, msg: msg})
+            //socket.emit('chat message', $('#m').val());
+            $('#m').val('');
+            return false;
+        });
+        function initWatchRoom(roomId){
+            var socket = io.connect();
+            socket.emit('create', roomId);
+            socket.on('update', onRecieve)
+        }
+        function onRecieve(msg){
+            console.log("Message Recieved: ", msg)
+            $('#messages').append("<li>"+msg+"</li>")
+        }
+        function sendMessage(body){
+            $.ajax({
+                type: "POST",
+                url: "/api/req",
+                // The key needs to match your method's input parameter (case-sensitive).
+                data: JSON.stringify(body),
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function(data){
+                    //alert(data);
+                },
+                failure: function(errMsg) {
+                    //alert(errMsg);
+                }
+            });
+        }
+        
+        
+    </script>
+  </body>
+</html>
